@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --general-log=true --general-log-file=/tmp/docker/sql.log
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mysql_database
+      MYSQL_USER: mysql_user
+      MYSQL_PASSWORD: mysql_pw
+      TZ: "Asia/Tokyo"
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - backend
+
+  web:
+    build: ./docker/app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9000:9000"
+    volumes:
+      - ./www:/var/www
+    environment:
+      DATABASE_HOST: mysql
+      DATABASE_NAME: mysql_database
+      DATABASE_USER: mysql_user
+      DATABASE_PASSWORD: mysql_pw
+      TZ: "Asia/Tokyo"
+    networks:
+      - backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=mysql_user
+      - PMA_PASSWORD=mysql_pw
+    ports:
+      - 8080:80
+    networks:
+      - backend
+
+  smtp:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "2525:2525"
+    networks:
+      - backend
+
+networks:
+  backend:
